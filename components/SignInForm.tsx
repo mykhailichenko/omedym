@@ -1,6 +1,19 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
+'use client'
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
+
+import { useTodoStore } from '@/store/todos';
+
+import {
+    FormControl,
+    FormLabel,
+    FormErrorMessage,
+    Input,
+    Button,
+    Box
+} from '@chakra-ui/react';
 
 const schema = z.object({
     email: z.string().email(),
@@ -9,44 +22,79 @@ const schema = z.object({
 
 type FormFields = z.infer<typeof schema>;
 
-export default function SignIn() {
+export default function SignInForm() {
+    const router = useRouter();
+
     const {
         register,
         handleSubmit,
         setError,
-        formState: { errors, isSubmitting },
-    } = useForm<FormFields>({
-        defaultValues: {
-            email: "test@email.com",
+        formState: {
+            errors,
+            isSubmitting
         },
+    } = useForm<FormFields>({
         resolver: zodResolver(schema),
     });
+
+    const signIn = useTodoStore((state) => state.signIn);
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
         try {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            console.log(data);
+
+            if(data.email === 'user@gmail.com' && data.password === '12345678') {
+                signIn();
+                router.push('/todo');
+            } else {
+                setError('root', {
+                    message: 'Wrong email or password...',
+                });
+            }
         } catch (error) {
-            setError("root", {
-                message: "This email is already taken",
+            setError('root', {
+                message: 'Something went wrong...',
             });
         }
     };
 
     return (
-        <form className="tutorial gap-2" onSubmit={handleSubmit(onSubmit)}>
-            <input {...register("email")} type="text" placeholder="Email" />
-            {errors.email && (
-                <div className="text-red-500">{errors.email.message}</div>
-            )}
-            <input {...register("password")} type="password" placeholder="Password" />
-            {errors.password && (
-                <div className="text-red-500">{errors.password.message}</div>
-            )}
-            <button disabled={isSubmitting} type="submit">
-                {isSubmitting ? "Loading..." : "Submit"}
-            </button>
-            {errors.root && <div className="text-red-500">{errors.root.message}</div>}
-        </form>
+        <Box data-testid='signin-form' as='form' onSubmit={handleSubmit(onSubmit)}>
+            <FormControl isInvalid={!!errors.email}>
+                <FormLabel>Email</FormLabel>
+                <Input
+                    data-testid='email'
+                    {...register('email')}
+                    type='text'
+                    placeholder='Email'
+                />
+                <FormErrorMessage data-testid='email-feedback'>{errors.email?.message}</FormErrorMessage>
+            </FormControl>
+
+            <FormControl isInvalid={!!errors.password}>
+                <FormLabel>Password</FormLabel>
+                <Input
+                    data-testid='password'
+                    {...register('password')}
+                    type='password'
+                    placeholder='Password'
+                />
+                <FormErrorMessage data-testid='password-feedback'>{errors.password?.message}</FormErrorMessage>
+            </FormControl>
+
+            <FormControl isInvalid={!!errors.root}>
+                <FormErrorMessage>{errors.root?.message}</FormErrorMessage>
+            </FormControl>
+
+            <Button
+                data-testid='submit-btn'
+                mt={4}
+                colorScheme='teal'
+                isLoading={isSubmitting}
+                type='submit'
+            >
+                {isSubmitting ? 'Loading...' : 'Submit'}
+            </Button>
+        </Box>
     );
-};
+}

@@ -1,7 +1,7 @@
-import {shallow} from 'zustand/shallow';
-import {useTodoStore} from '@/store/todos';
+import { shallow } from 'zustand/shallow';
+import { useTodoStore } from '@/store/todos';
 
-import { Card, Heading, CardBody, CardFooter, Stack, Button, Text } from '@chakra-ui/react';
+import { Button, Box, Text } from '@chakra-ui/react';
 
 type Todo = {
     userId: number,
@@ -15,25 +15,39 @@ type Props = {
 };
 
 export default function TodoItem({todo}:Props) {
-  const deleteTodo = useTodoStore(state => state.deleteTodo, shallow);
+  const [deleteTodo, toggleTodo] = useTodoStore(state => [state.deleteTodo, state.toggleTodo], shallow);
+
+  const handleDeleteTodo = () => {
+      deleteTodo(todo.id);
+  };
+
+  const handleToggleTodo = () => {
+      toggleTodo(todo.id);
+  };
 
   return(
-      <Card
-          direction={{ base: 'column', sm: 'row' }}
-          overflow='hidden'
-          variant='outline'
+      <Box
+          display='flex'
+          alignItems='center'
+          justifyContent='space-between'
+          p={4}
+          marginBottom={3}
+          borderWidth='1px'
+          borderRadius='md'
+          onClick={handleToggleTodo}
       >
-          <Stack>
-              <CardBody>
-                  <Heading size='md'>{todo.title}</Heading>
-              </CardBody>
+          <Box>
+              <Text
+                  as='span'
+                  textDecoration={todo.completed ? 'line-through' : 'none'}
+              >
+                  {todo.title}
+              </Text>
+          </Box>
 
-              <CardFooter>
-                  <Button variant='solid' colorScheme='red' onClick={() => deleteTodo(todo.id)}>
-                      Delete
-                  </Button>
-              </CardFooter>
-          </Stack>
-      </Card>
+          <Button variant='solid' colorScheme='red' onClick={handleDeleteTodo}>
+              X
+          </Button>
+      </Box>
   )
 };
